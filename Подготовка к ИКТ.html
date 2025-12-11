@@ -2822,9 +2822,7 @@
                     if (showAnswers) return;
                     
                     userAnswers[questionKey] = optionIndex;
-                    
-                    updateQuestionList();
-                    displayQuestion(index);
+                    updateQuestionItemStyles();
                     updateStats();
                     updateProgressBar();
                     
@@ -2838,7 +2836,7 @@
             nextBtn.disabled = index === questions.length - 1;
             
             updateModuleTitle();
-            scrollToActiveQuestion();
+            updateQuestionItemStyles();
         }
 
         // Показать индикатор правильности ответа
@@ -2866,7 +2864,6 @@
                 showAnswers = false;
                 showAnswerBtn.textContent = "Показать ответ";
                 displayQuestion(currentQuestionIndex);
-                updateQuestionList();
                 updateProgressBar();
             }
         }
@@ -2878,7 +2875,6 @@
                 showAnswers = false;
                 showAnswerBtn.textContent = "Показать ответ";
                 displayQuestion(currentQuestionIndex);
-                updateQuestionList();
                 updateProgressBar();
             }
         }
@@ -2919,13 +2915,42 @@
             progressFill.style.width = `${progress}%`;
         }
 
-        // Прокрутить к активному вопросу в списке
-        function scrollToActiveQuestion() {
-            const activeItems = document.querySelectorAll('.question-item.active');
-            if (activeItems.length > 0) {
-                activeItems[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Новая функция для обновления только стилей вопросов в списке
+        function updateQuestionItemStyles() {
+            const questionItems = document.querySelectorAll('.question-item');
+            questionItems.forEach((item, index) => {
+                // Убираем активный класс у всех
+                item.classList.remove('active');
+                
+                // Добавляем классы answered
+                const isAnswered = checkIfQuestionAnsweredByItem(item);
+                if (isAnswered) {
+                    item.classList.add('answered');
+                } else {
+                    item.classList.remove('answered');
+                }
+            });
+            
+            // Находим и отмечаем активный вопрос
+            const activeQuestion = document.querySelector(`.question-item:nth-child(${currentQuestionIndex + 1})`);
+            if (activeQuestion) {
+                activeQuestion.classList.add('active');
             }
         }
+
+        // Вспомогательная функция для проверки, отвечен ли вопрос
+        function checkIfQuestionAnsweredByItem(item) {
+            const questionIdText = item.querySelector('strong').textContent;
+            // Извлекаем идентификатор вопроса из текста
+            const match = questionIdText.match(/(M\d+)(V\d+)/);
+            if (match) {
+                const module = match[1];
+                const id = match[2];
+                const questionKey = `${module}-${id}`;
+                return userAnswers[questionKey] !== undefined;
+            }
+            return false;
+        }            
 
         // Получить ключ вопроса
         function getQuestionKey(question) {
